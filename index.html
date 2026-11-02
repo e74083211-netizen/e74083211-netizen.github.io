@@ -1,12 +1,343 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Happy Birthday</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="A special birthday surprise">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>Happy Birthday 🎂</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-  <h1>Happy Birthday Dongqingxin 🎂</h1>
-  <p>The website is working!</p>
+  <!-- ═══════════════════════════════════════
+       进度条
+  ═══════════════════════════════════════ -->
+  <div class="progress-bar" id="progressBar" aria-hidden="true"></div>
+
+  <!-- ═══════════════════════════════════════
+       音乐控制
+  ═══════════════════════════════════════ -->
+  <button class="music-toggle" id="musicToggle" aria-label="Toggle background music" title="背景音乐">
+    <span class="music-icon">🎵</span>
+    <span class="music-bars">
+      <i></i><i></i><i></i><i></i>
+    </span>
+  </button>
+
+  <!-- ═══════════════════════════════════════
+       导航点
+  ═══════════════════════════════════════ -->
+  <nav class="section-nav" id="sectionNav" aria-label="Page sections">
+    <button data-section="opening" aria-label="开场" class="active"></button>
+    <button data-section="hero" aria-label="主视觉"></button>
+    <button data-section="timeline" aria-label="时间线"></button>
+    <button data-section="gallery" aria-label="照片墙"></button>
+    <button data-section="letters" aria-label="信件"></button>
+    <button data-section="cake" aria-label="蛋糕"></button>
+    <button data-section="starsky" aria-label="星空"></button>
+    <button data-section="finale" aria-label="结尾"></button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════
+       第0幕：开场 — 信封邀请
+  ═══════════════════════════════════════ -->
+  <section id="opening" class="section opening" aria-label="开场">
+    <canvas id="openingCanvas" class="opening__canvas"></canvas>
+
+    <div class="opening__content">
+      <p class="opening__pre-title" id="openingPreTitle"></p>
+
+      <div class="envelope" id="envelope">
+        <div class="envelope__flap"></div>
+        <div class="envelope__body">
+          <div class="envelope__letter">
+            <p class="envelope__letter-text">Happy Birthday ✨</p>
+          </div>
+        </div>
+        <div class="envelope__shadow"></div>
+      </div>
+
+      <p class="opening__subtitle" id="openingSubtitle"></p>
+
+      <button class="opening__btn" id="openBtn">
+        <span id="openBtnText"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第1幕：生日主视觉
+  ═══════════════════════════════════════ -->
+  <section id="hero" class="section hero" aria-label="生日主视觉">
+    <canvas id="heroCanvas" class="hero__canvas"></canvas>
+
+    <div class="hero__content">
+      <h1 class="hero__title">
+        <span class="hero__title-line1" id="heroLine1"></span>
+        <span class="hero__title-line2" id="heroLine2"></span>
+      </h1>
+      <p class="hero__subtitle" id="heroSubtitle"></p>
+      <button class="hero__cta" id="heroCta">
+        <span id="heroCtaText"></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <polyline points="19 12 12 19 5 12"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hero__scroll-hint">
+      <span>向下滑动</span>
+      <div class="hero__scroll-arrow"></div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第2幕：回忆时间线
+  ═══════════════════════════════════════ -->
+  <section id="timeline" class="section timeline" aria-label="回忆时间线">
+    <div class="section__header">
+      <span class="section__number">02</span>
+      <h2 class="section__title" id="timelineTitle"></h2>
+      <p class="section__subtitle" id="timelineSubtitle"></p>
+    </div>
+
+    <div class="timeline__track">
+      <div class="timeline__line"></div>
+      <div class="timeline__items" id="timelineItems">
+        <!-- JS 动态填充 -->
+      </div>
+    </div>
+
+    <!-- 回忆详情弹窗 -->
+    <div class="story-modal" id="storyModal" role="dialog" aria-modal="true" hidden>
+      <div class="story-modal__overlay"></div>
+      <div class="story-modal__card">
+        <button class="story-modal__close" aria-label="关闭">&times;</button>
+        <div class="story-modal__image-wrap" id="storyModalImage"></div>
+        <div class="story-modal__body">
+          <span class="story-modal__date" id="storyModalDate"></span>
+          <h3 class="story-modal__title" id="storyModalTitle"></h3>
+          <p class="story-modal__text" id="storyModalText"></p>
+          <div class="story-modal__footer">
+            <button class="story-modal__like-btn" id="storyModalLikeBtn" type="button">
+              <span class="like-heart">❤️</span>
+              <span class="like-text">珍藏这段回忆</span>
+              <span class="like-count" id="storyModalLikeCount">0</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第3幕：照片墙
+  ═══════════════════════════════════════ -->
+  <section id="gallery" class="section gallery" aria-label="照片墙">
+    <div class="section__header">
+      <span class="section__number">03</span>
+      <h2 class="section__title" id="galleryTitle"></h2>
+      <p class="section__subtitle" id="gallerySubtitle"></p>
+    </div>
+
+    <div class="gallery__grid" id="galleryGrid">
+      <!-- JS 动态填充 -->
+    </div>
+
+    <!-- 大图灯箱 -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="照片查看器" hidden>
+      <button class="lightbox__close" aria-label="关闭">&times;</button>
+      <button class="lightbox__prev" aria-label="上一张">‹</button>
+      <button class="lightbox__next" aria-label="下一张">›</button>
+      <div class="lightbox__content">
+        <div class="lightbox__image-wrap">
+          <div class="lightbox__image" id="lightboxImage"></div>
+        </div>
+        <p class="lightbox__caption" id="lightboxCaption"></p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第4幕：没说出口的话
+  ═══════════════════════════════════════ -->
+  <section id="letters" class="section letters" aria-label="没说出口的话">
+    <div class="section__header">
+      <span class="section__number">04</span>
+      <h2 class="section__title" id="lettersTitle"></h2>
+      <p class="section__subtitle" id="lettersSubtitle"></p>
+    </div>
+
+    <div class="letters__grid" id="lettersGrid">
+      <!-- JS 动态填充 -->
+    </div>
+
+    <!-- 信件阅读弹窗 -->
+    <div class="letter-modal" id="letterModal" role="dialog" aria-modal="true" hidden>
+      <div class="letter-modal__overlay"></div>
+      <div class="letter-modal__paper">
+        <button class="letter-modal__close" aria-label="关闭">&times;</button>
+        <h3 class="letter-modal__title" id="letterModalTitle"></h3>
+        <div class="letter-modal__content" id="letterModalContent"></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第5幕：生日蛋糕
+  ═══════════════════════════════════════ -->
+  <section id="cake" class="section cake-section" aria-label="生日蛋糕">
+    <div class="section__header">
+      <span class="section__number">05</span>
+      <h2 class="section__title" id="cakeTitle"></h2>
+      <p class="section__subtitle" id="cakeSubtitle"></p>
+    </div>
+
+    <div class="cake__stage" id="cakeStage">
+      <!-- SVG 蛋糕 -->
+      <div class="cake__wrapper">
+        <div class="cake__candles" id="cakeCandles">
+          <!-- JS 动态生成蜡烛 -->
+        </div>
+        <svg class="cake__svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+          <!-- 蛋糕主体 -->
+          <defs>
+            <linearGradient id="cakeGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#f5e6d3;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#e8d0b8;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="cakeGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#ffe4e1;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#f5c6c0;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="frostingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#fff5ee;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#ffecd2;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+
+          <!-- 盘子 -->
+          <ellipse cx="200" cy="275" rx="180" ry="18" fill="#e8e0d4" opacity="0.5"/>
+
+          <!-- 下层蛋糕 -->
+          <rect x="70" y="200" width="260" height="70" rx="12" fill="url(#cakeGrad1)"/>
+          <!-- 下层装饰 -->
+          <rect x="70" y="200" width="260" height="15" rx="8" fill="url(#frostingGrad)" opacity="0.8"/>
+
+          <!-- 上层蛋糕 -->
+          <rect x="110" y="140" width="180" height="65" rx="10" fill="url(#cakeGrad2)"/>
+          <!-- 上层奶油 -->
+          <rect x="110" y="140" width="180" height="14" rx="7" fill="url(#frostingGrad)"/>
+
+          <!-- 奶油装饰波浪 -->
+          <path d="M70 200 Q90 188 110 200 Q130 188 150 200 Q170 188 190 200 Q210 188 230 200 Q250 188 270 200 Q290 188 310 200 Q330 188 330 200" fill="url(#frostingGrad)" opacity="0.9"/>
+
+          <!-- 小装饰 -->
+          <circle cx="130" cy="230" r="4" fill="#c17c74" opacity="0.6"/>
+          <circle cx="200" cy="235" r="3.5" fill="#7c6f9c" opacity="0.6"/>
+          <circle cx="270" cy="228" r="4" fill="#d4a574" opacity="0.6"/>
+          <circle cx="160" cy="170" r="3" fill="#c17c74" opacity="0.5"/>
+          <circle cx="240" cy="165" r="3" fill="#7c6f9c" opacity="0.5"/>
+        </svg>
+
+        <!-- 蛋糕底部光晕 -->
+        <div class="cake__glow"></div>
+      </div>
+
+      <!-- 蛋糕交互按钮 -->
+      <div class="cake__controls">
+        <button class="cake__btn cake__btn--light" id="cakeLightBtn">点燃蜡烛 🔥</button>
+        <button class="cake__btn cake__btn--wish" id="cakeWishBtn" hidden>许个愿望 ✨</button>
+        <button class="cake__btn cake__btn--blow" id="cakeBlowBtn" hidden>吹灭蜡烛 💨</button>
+      </div>
+
+      <!-- 许愿文字 -->
+      <p class="cake__message" id="cakeMessage" hidden></p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第6幕：星空心愿
+  ═══════════════════════════════════════ -->
+  <section id="starsky" class="section starsky" aria-label="星空心愿">
+    <canvas id="starskyCanvas" class="starsky__canvas"></canvas>
+
+    <div class="section__header section__header--light">
+      <span class="section__number">06</span>
+      <h2 class="section__title" id="starskyTitle"></h2>
+      <p class="section__subtitle" id="starskySubtitle"></p>
+    </div>
+
+    <div class="starsky__wishes" id="starskyWishes">
+      <!-- JS 动态生成星星 -->
+    </div>
+
+    <div class="starsky__revealed" id="starskyRevealed" hidden>
+      <p class="starsky__wish-text" id="starskyWishText"></p>
+    </div>
+
+    <button class="starsky__collect" id="starskyCollect">
+      <span id="starskyCollectText"></span>
+    </button>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       第7幕：最后的祝福
+  ═══════════════════════════════════════ -->
+  <section id="finale" class="section finale" aria-label="最后的祝福">
+    <canvas id="finaleCanvas" class="finale__canvas"></canvas>
+
+    <div class="finale__content" id="finaleContent">
+      <div class="finale__lines" id="finaleLines">
+        <!-- JS 动态填充 -->
+      </div>
+
+      <div class="finale__gift" id="finaleGift" hidden>
+        <button class="finale__gift-btn" id="finaleGiftBtn">
+          <span class="finale__gift-icon">🎁</span>
+          <span class="finale__gift-text" id="finaleGiftText"></span>
+        </button>
+      </div>
+
+      <div class="finale__hidden" id="finaleHidden" hidden>
+        <p class="finale__hidden-text" id="finaleHiddenText"></p>
+      </div>
+
+      <button class="finale__replay" id="finaleReplay" hidden>
+        <span id="finaleReplayText"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       庆祝效果层
+  ═══════════════════════════════════════ -->
+  <canvas id="confettiCanvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+
+  <!-- 脚本 -->
+  <script src="js/config.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
