@@ -1,161 +1,279 @@
-# 🎂 Happy Birthday — 沉浸式生日惊喜网站
+# Birthday site — public wishes + password‑protected memories
 
-一个精心设计的互动式生日网站，作为送给重要的人的特别礼物。
+A warm, cinematic birthday gift website (Chinese UI by default):
 
-## ✨ 特色功能
+**Opening invitation → Birthday wishes → Interactive cake (light, wish, blow) → Public wishes wall → Password‑unlocked memories → Unfolding letter → Final gift reveal**
 
-- 🎬 **沉浸式开场** — 信封打开动画，粒子光效
-- 🌟 **星空主视觉** — 流星、星空背景
-- 📖 **回忆时间线** — 可交互的故事时间线
-- 📸 **照片画廊** — 拍立得风格照片墙 + 灯箱查看
-- 💌 **私密信件** — 可打开的信封，每封都有不同的话
-- 🎂 **互动蛋糕** — 点蜡烛、许愿、吹灭的完整交互
-- ⭐ **星空祝福** — 点击星星发现隐藏祝福
-- 🎁 **结尾惊喜** — 文字揭示 + 烟花庆祝
-- 🎵 **背景音乐** — Web Audio API 生成的柔和旋律
-- 🥚 **隐藏彩蛋** — 等你发现
+The public part works on its own. The private part (photos, stories, letter, final surprise) only reaches the browser after the server has checked the access password.
 
-## 🚀 本地预览
+---
 
-无需安装任何依赖，直接在浏览器中打开即可：
+## Architecture (and why not GitHub Pages)
 
-```bash
-# 方法一：直接打开
-open index.html
+This repository used to be a GitHub Pages site. **GitHub Pages only serves static files**, so on its own it cannot:
 
-# 方法二：使用本地服务器（推荐，支持完整功能）
-python3 -m http.server 8000
-# 然后访问 http://localhost:8000
+- check a password on a server (any password in page JavaScript can be read by anyone),
+- store a shared wishes wall that persists across devices,
+- keep private photos private (everything in the published repo/folder is publicly downloadable).
 
-# 方法三：使用 Node.js
-npx serve .
-```
+So the site now runs on **Cloudflare Workers** (free tier is enough for a project like this):
 
-## 🎨 自定义内容
+| Piece | Service | Purpose |
+| --- | --- | --- |
+| `public/` | Workers static assets | Public pages, CSS, JS, decorative images, music |
+| `src/worker.js` | Worker (`/api/*`) | Password check, sessions, rate limiting, wishes API, admin API |
+| D1 (SQLite) | `DB` binding | Wishes wall messages + rate‑limit counters |
+| Workers KV | `PRIVATE_KV` binding | Private text (`content.json`) and private photos |
 
-所有可定制的内容都集中在 **`js/config.js`** 文件中。
+How the private area is protected:
 
-### 修改姓名和日期
+- The password lives only in a server secret (`ACCESS_PASSWORD`). It is never in HTML/JS.
+- Unlocking sets an **HttpOnly, signed session cookie** (HMAC with `SESSION_SECRET`), limited to `/api/private`, `Secure` on HTTPS, valid for `PRIVATE_SESSION_HOURS` (default 12h). Changing the password invalidates all old sessions.
+- Private text and photos are served only by `/api/private/content` and `/api/private/media/...`, which return **401** without a valid session. Photos use `Cache-Control: private, no-cache`, so the browser must re‑check the session every time.
+- Failed password attempts are rate‑limited (5 per visitor per 15 min, plus a global cap of 60 per 15 min).
+- “Leave private area” clears the cookie and removes the content from the page.
+- `private-assets/` is git‑ignored and is **never** inside `public/`.
+- The admin area uses a **different** password (`ADMIN_PASSWORD`) and a separate cookie; the private‑area password cannot log in to admin, and vice versa.
 
-```javascript
-name: '你的名字',
-nameEn: 'YourName',
-birthday: '2026-01-01',
-```
+> The access password controls who can enter — anyone who knows it can see the private area. It does not prove that a specific person is the one visiting.
 
-### 修改回忆时间线
+No build step: the frontend is plain HTML/CSS/ES modules; `wrangler` bundles the Worker on deploy.
 
-在 `timeline.items` 数组中修改或添加项目：
+---
 
-```javascript
-{
-  date: '2024 年 3 月',
-  title: '你的回忆标题',
-  text: '这里写回忆的故事...',
-  image: 'assets/images/your-photo.jpg',  // 或者设为 null 使用默认占位
-  color: '#6b8cce',
-}
-```
+## 1. Run and preview locally
 
-### 添加真实照片
-
-1. 将照片放入 `assets/images/` 目录
-2. 在 `config.js` 中将 `image: null` 改为 `image: 'assets/images/你的照片.jpg'`
-
-### 修改信件内容
-
-在 `letters.items` 中编辑每封信：
-
-```javascript
-{
-  envelope: '信封上的标题',
-  content: '信的内容...\n第二段...',
-  color: '#8a6bce',
-}
-```
-
-### 修改星空祝福
-
-在 `starsky.wishes` 数组中添加或修改祝福语。
-
-### 修改结尾文字
-
-在 `finale.lines` 数组中编辑逐行展示的文字。
-
-### 添加背景音乐
-
-将 MP3 文件放入项目，然后修改配置：
-
-```javascript
-music: {
-  enabled: true,
-  src: 'assets/audio/bgm.mp3',  // 设置音频文件路径
-}
-```
-
-## 📁 项目结构
-
-```
-.
-├── index.html          # 主页面
-├── CNAME              # 自定义域名配置
-├── css/
-│   └── style.css      # 所有样式
-├── js/
-│   ├── config.js      # 📝 内容配置（修改这个文件！）
-│   ├── app.js         # 主应用逻辑
-│   ├── effects.js     # 粒子、星空、烟花等视觉效果
-│   └── audio.js       # 背景音乐控制器
-├── assets/
-│   └── images/        # 存放照片
-└── README.md          # 本文件
-```
-
-## 🌐 部署到 GitHub Pages
-
-### 方法一：直接推送到 GitHub
+Requirements: Node.js 18+ (installed via Homebrew on this machine).
 
 ```bash
-# 如果还没有初始化 Git
-git init
-git remote add origin https://github.com/你的用户名/你的仓库名.github.io.git
-
-# 推送代码
-git add .
-git commit -m "🎂 Birthday website"
-git push -u origin main
+npm install
 ```
 
-### 方法二：GitHub Pages 设置
+```bash
+npm run setup
+```
 
-1. 登录 GitHub，进入仓库设置（Settings）
-2. 左侧找到 Pages
-3. Source 选择 `Deploy from a branch`
-4. Branch 选择 `main`，文件夹选择 `/ (root)`
-5. 保存，等待几分钟即可访问
+`npm run setup` does everything once:
+- creates `.dev.vars` with random **local** values for `ACCESS_PASSWORD`, `ADMIN_PASSWORD`, `SESSION_SECRET` (open the file to see them),
+- copies `private-assets.example/` → `private-assets/` (git‑ignored),
+- creates the local D1 tables,
+- imports private content into the local KV.
 
-### 自定义域名
+Then start the site:
 
-CNAME 文件已配置为 `happybirthdaydongqingxin.me`。
+```bash
+npm run dev
+```
 
-在 Namecheap 中设置 DNS：
-1. 登录 Namecheap
-2. 进入域名管理 → Advanced DNS
-3. 添加以下记录：
-   - Type: `A`, Host: `@`, Value: `185.199.108.153`
-   - Type: `A`, Host: `@`, Value: `185.199.109.153`
-   - Type: `A`, Host: `@`, Value: `185.199.110.153`
-   - Type: `A`, Host: `@`, Value: `185.199.111.153`
-   - Type: `CNAME`, Host: `www`, Value: `你的用户名.github.io`
+Open http://localhost:8787 (admin: http://localhost:8787/admin/).
 
-## 📱 兼容性
+Automated checks against the running dev server (auth blocking, cookies, wishes, admin; leaves no test data behind):
 
-- ✅ Chrome / Edge (推荐)
-- ✅ Safari / iOS Safari
-- ✅ Firefox
-- ✅ 手机 / 平板 / 电脑
-- ✅ 支持 `prefers-reduced-motion` 无障碍设置
+```bash
+npm run test:smoke
+```
 
-## 📄 License
+Add `-- http://localhost:8787 --rate` to also test the password rate limit (this locks your local password attempts for 15 minutes; clear with `npx wrangler d1 execute birthday-db --local --command "DELETE FROM rate_limits"`).
 
-This project is a personal gift. Feel free to fork and customize for your own use.
+A plain static server (e.g. `python3 -m http.server --directory public`) also shows the public pages; the wishes wall and private area then display a clear “backend not connected” message instead of pretending to work.
+
+---
+
+## 2. Change the name, birthday, texts, password
+
+**Public content** — edit [`public/site.config.js`](public/site.config.js):
+- `recipient.name`, `recipient.birthday` (`YYYY-MM-DD`), `recipient.sealLetter` (the character on the wax seal).
+  ⚠ The name `董庆鑫` and birthday `2026-11-15` were carried over from the previous site’s config — please confirm them.
+- Texts for every section (`opening`, `hero`, `wishes`, `cake`, `wall`, `private`, `footer`, `easterEgg`). `{name}` is replaced automatically.
+- `cake.candles` — number of candles (1–12).
+- `features` — switches: wishes wall, private area, microphone blowing, confetti, floating dust, film grain, synthesized birthday‑song fallback.
+- `hero.backgroundImage` — optional public mood image, e.g. `/images/hero.jpg`.
+
+This file is public. Don’t put private text in it.
+
+**Access password**
+- Local: edit `ACCESS_PASSWORD` in `.dev.vars`, restart `npm run dev`.
+- Production: `npx wrangler secret put ACCESS_PASSWORD` (takes effect immediately; existing sessions are logged out).
+
+---
+
+## 3. Photos and private content
+
+### Folder structure and naming
+
+```
+public/images/                 ← PUBLIC decorative images only (anyone can download these)
+  favicon.svg
+  hero.jpg                     ← optional, set hero.backgroundImage to '/images/hero.jpg'
+
+private-assets/                ← PRIVATE, git-ignored, never published as static files
+  content.json                 ← memories, letter, final surprise (text)
+  memories/
+    memory-01.jpg              ← shown with the 1st memory ("photo": "memory-01")
+    memory-02.heic             ← iPhone HEIC works on macOS (auto-converted to JPG)
+    memory-03.png
+    ...
+  surprise/
+    surprise.jpg               ← optional photo inside the final gift
+```
+
+Rules: lowercase letters, numbers and `-` only; extensions jpg/jpeg/png/webp/gif/heic/avif. Any size or orientation is fine — the page crops nicely, detects portrait photos, and opens the full image in a lightbox (tap/click; arrows, Esc, swipe). Missing photos show a styled placeholder with the expected filename.
+
+### Edit the private text
+
+[`private-assets.example/content.json`](private-assets.example/content.json) is the committed **example** (every example line is marked `【示例】`). Your real version is `private-assets/content.json` (git‑ignored). It contains:
+- `intro` — heading of the private area
+- `memories[]` — `photo`, `date`, `title`, `text` (as many as you like; `photo` defaults to `memory-01`, `memory-02`, … by position)
+- `letter` — `envelopeLabel`, `salutation`, `paragraphs[]`, `closing`, `signature`, `date` (paragraphs unfold one by one)
+- `surprise` — `teaser`, `buttonText`, `photo`, `title`, `text`, optional `link` (https only) + `linkText`
+
+### Import (local or production)
+
+```bash
+npm run import:local
+```
+
+```bash
+npm run import:remote
+```
+
+The import script validates JSON and filenames, reports which photos are still missing, (on macOS) resizes photos to max 2400px plus 960px thumbnails using the built‑in `sips`, converts HEIC → JPG, and uploads everything to KV. Re‑run it any time you change text or photos — no code or URL editing. Use `--no-resize` to upload originals. Temporary files are deleted after upload.
+
+---
+
+## 4. Music
+
+Put two files here (exact names), then reload — no code change needed:
+
+```
+public/audio/background.mp3    gentle background music, loops
+public/audio/birthday.mp3      birthday song after the candles go out
+```
+
+Behaviour:
+- Nothing plays until the visitor clicks “拆开邀请 · 打开声音” (browser autoplay rules). “安静地打开” enters without sound.
+- Bottom‑right dock: play/pause background, mute.
+- When the birthday song starts, the background music fades out and pauses; it fades back in after the song ends. Tracks never overlap. Background pauses while the tab is hidden.
+- Missing files: the site checks once, greys out the play button, and keeps working (one 404 per missing file in the console, no retries).
+- If `birthday.mp3` is missing, a **programmatically synthesized music‑box version** of “Happy Birthday” plays (Web Audio oscillators, not a recording and not AI‑generated; the melody is in the public domain). Turn it off with `features.synthBirthdayFallback: false`.
+
+No audio files are included: I did not add tracks of unclear origin. Only use music you have the right to use (e.g. tracks explicitly licensed CC0/CC‑BY or royalty‑free for websites, or your own recording) and note the source/license here:
+
+| File | Title / author | Source URL | License |
+| --- | --- | --- | --- |
+| background.mp3 | | | |
+| birthday.mp3 | | | |
+
+---
+
+## 5. Database and backend services
+
+Schema: [`migrations/0001_init.sql`](migrations/0001_init.sql) — `messages(id, nickname, content, status, ip_hash, created_at)` and `rate_limits`.
+
+Settings in [`wrangler.jsonc`](wrangler.jsonc):
+- `MESSAGE_MODERATION`: `"off"` (wishes appear immediately; you can hide/delete later) or `"pre"` (new wishes wait for your approval).
+- `PRIVATE_SESSION_HOURS`: how long an unlock lasts (default 12).
+
+Secrets (never commit; see [`.dev.vars.example`](.dev.vars.example)):
+- `ACCESS_PASSWORD` — private area password
+- `ADMIN_PASSWORD` — admin password, ≥ 8 chars, **must differ** from `ACCESS_PASSWORD`
+- `SESSION_SECRET` — ≥ 32 random chars (`openssl rand -base64 48`)
+
+If a secret is missing, the affected area shows “not configured” instead of falling back to anything insecure.
+
+---
+
+## 6. Manage public wishes
+
+Open `/admin/` (not linked from the site), log in with `ADMIN_PASSWORD`:
+- filter: all / visible / hidden / pending,
+- **Hide** or **Show** a wish, **Delete** permanently (with confirmation),
+- an anonymous sender tag (first characters of a salted IP hash) helps spot spam from the same visitor.
+
+Wishes wall protections: nickname ≤ 20 chars, message 2–300 chars, control/zero‑width characters stripped, at most one link, honeypot field, minimum fill time, duplicate detection, 3 wishes / 10 min and 20 / day per visitor, global cap 300 / hour. All text is rendered with `textContent` (no HTML injection). No email/phone is collected; raw IPs are not stored.
+
+---
+
+## 7. Deploy (Cloudflare) — what you need to do
+
+You need a free Cloudflare account. Nothing here costs money on the free plan for a site of this size (Workers, D1 and KV free tiers). I have **not** deployed, pushed, or created any cloud resources.
+
+```bash
+npx wrangler login
+```
+
+```bash
+npx wrangler d1 create birthday-db
+```
+
+```bash
+npx wrangler kv namespace create PRIVATE_KV
+```
+
+Copy the two printed IDs into `wrangler.jsonc` (`REPLACE_WITH_D1_DATABASE_ID`, `REPLACE_WITH_KV_NAMESPACE_ID`). Then:
+
+```bash
+npm run db:migrate:remote
+```
+
+```bash
+npx wrangler secret put ACCESS_PASSWORD
+```
+
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+```
+
+```bash
+npx wrangler secret put SESSION_SECRET
+```
+
+```bash
+npm run import:remote
+```
+
+```bash
+npm run deploy
+```
+
+The site is then live at `https://birthday-site.<your-subdomain>.workers.dev`.
+
+**Custom domain `happybirthdaydongqingxin.me`:** add the domain to Cloudflare (change the nameservers at your registrar to Cloudflare’s), then in the Cloudflare dashboard → Workers & Pages → `birthday-site` → Settings → Domains & Routes → Add custom domain. Afterwards turn off GitHub Pages for this repo (Settings → Pages), otherwise GitHub keeps serving the repo (it would now just show this README). The `CNAME` file is only used by GitHub Pages and can be deleted once you move.
+
+**Public repo reminder:** this repository is public on GitHub. Everything committed is visible — that’s why real photos/text live only in git‑ignored `private-assets/` and in KV. Check `git status` before committing; `.dev.vars` and `private-assets/` should never appear.
+
+---
+
+## Project structure
+
+```
+public/                    static, public
+  index.html               all sections
+  site.config.js           public content config
+  css/main.css             visual design
+  js/main.js               boot, opening, sound dock, reveals, easter egg
+  js/cake.js               SVG cake, candles, wish flow, microphone blowing
+  js/audio.js              background/birthday audio, fades, ducking, synth fallback
+  js/wall.js               wishes wall
+  js/private.js            password gate, memories, lightbox, letter, gift
+  js/effects.js            dust, confetti, sparkles
+  admin/                   moderation page
+  _headers                 security headers (CSP etc.)
+src/                       Worker backend
+  worker.js, routes/, lib/
+migrations/                D1 schema
+scripts/
+  setup-local.mjs          one-time local setup
+  import-private.mjs       private-assets → KV
+  smoke-test.mjs           end-to-end API checks
+private-assets.example/    committed template (examples only)
+private-assets/            your real private files (git-ignored)
+```
+
+## Accessibility & motion
+
+Keyboard: every control is a real button (candles too: Tab + Enter/Space); lightbox supports Esc/arrows and keeps focus inside; visible focus rings. `prefers-reduced-motion` disables confetti, dust, grain motion, flicker and long transitions. The microphone is only requested after the visitor clicks “对着麦克风吹气”; if permission is denied the button/candle taps still work.
+
+## Previous version
+
+The old static site is preserved on the local branch `backup/pre-redesign-2026-11-06` (and in Git history).

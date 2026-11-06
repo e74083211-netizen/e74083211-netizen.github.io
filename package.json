@@ -1,0 +1,21 @@
+{
+  "name": "birthday-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "生日礼物网站：公开祝福 + 口令保护的私密回忆（Cloudflare Workers + D1 + KV）",
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup-local.mjs",
+    "dev": "wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply birthday-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply birthday-db --remote",
+    "import:local": "node scripts/import-private.mjs --local",
+    "import:remote": "node scripts/import-private.mjs --remote",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

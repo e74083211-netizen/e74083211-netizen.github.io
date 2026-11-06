@@ -1,0 +1,41 @@
+// Cloudflare Workers 配置。部署前请把下面两个 REPLACE_... 换成你自己创建的资源 ID（见 README「部署」）。
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "birthday-site",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-10-01",
+
+  // 只有 public/ 会被当作公开静态文件。private-assets/ 永远不会被上传到这里。
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "none"
+  },
+
+  // 留言墙数据库（共享、持久）
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "birthday-db",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // 私密照片与私密文字（只能通过已解锁的 API 读取）
+  "kv_namespaces": [
+    {
+      "binding": "PRIVATE_KV",
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ],
+
+  // 非机密开关。机密（密码、会话密钥）请用 `wrangler secret put`，不要写在这里。
+  "vars": {
+    "MESSAGE_MODERATION": "off",
+    "PRIVATE_SESSION_HOURS": "12"
+  },
+
+  "observability": { "enabled": true }
+}

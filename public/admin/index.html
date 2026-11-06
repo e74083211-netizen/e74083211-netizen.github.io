@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="dark">
+  <title>留言管理</title>
+  <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <script type="module" src="/admin/admin.js"></script>
+</head>
+<body class="admin">
+  <main class="admin__main">
+    <header class="admin__head">
+      <div>
+        <p class="eyebrow">Admin</p>
+        <h1>留言管理</h1>
+      </div>
+      <button class="btn btn--ghost" type="button" data-logout hidden>退出后台</button>
+    </header>
+
+    <section class="card admin__login" data-login hidden>
+      <h2>登录后台</h2>
+      <p class="admin__muted">这里使用独立的管理员密码（ADMIN_PASSWORD），与私密区域的访问口令不同。</p>
+      <form data-login-form novalidate>
+        <label class="field">
+          <span class="field__label">管理员密码</span>
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn--primary" type="submit">登录</button>
+        <p class="admin__status" data-login-status role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section data-panel hidden>
+      <div class="admin__toolbar">
+        <div class="admin__tabs" role="tablist" data-tabs>
+          <button role="tab" type="button" data-filter="" aria-selected="true">全部 <em data-n="all"></em></button>
+          <button role="tab" type="button" data-filter="visible" aria-selected="false">显示中 <em data-n="visible"></em></button>
+          <button role="tab" type="button" data-filter="hidden" aria-selected="false">已隐藏 <em data-n="hidden"></em></button>
+          <button role="tab" type="button" data-filter="pending" aria-selected="false">待审核 <em data-n="pending"></em></button>
+        </div>
+        <button class="btn btn--ghost" type="button" data-refresh>刷新</button>
+      </div>
+      <p class="admin__muted" data-mode></p>
+      <ul class="admin__list" data-list></ul>
+      <p class="admin__empty" data-empty hidden>没有留言。</p>
+      <button class="btn btn--ghost admin__more" type="button" data-more hidden>加载更多</button>
+    </section>
+
+    <p class="admin__status" data-global-status role="status" aria-live="polite"></p>
+    <p class="admin__back"><a href="/">← 回到网站</a></p>
+  </main>
+</body>
+</html>

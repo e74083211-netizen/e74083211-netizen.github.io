@@ -1,0 +1,20 @@
+# 依赖与构建
+node_modules/
+.wrangler/
+dist/
+
+# 机密：本地开发变量与真实环境变量
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+
+# 私密素材：真实照片、私密文字。永远不要提交！
+private-assets/
+
+# 系统文件
+.DS_Store
+**/.DS_Store
+*.log
