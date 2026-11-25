@@ -296,7 +296,7 @@ Wishes wall protections: nickname ≤ 20 chars, message 2–300 chars, control/z
 
 ## 7. Deploy (Cloudflare) — what you need to do
 
-You need a free Cloudflare account. Workers, D1 and KV are on the free plan. The shared album additionally needs **R2, which requires adding a payment method to activate** (see “Shared album” above) — or switch the album off. I have **not** deployed, pushed, or created any cloud resources.
+You need a free Cloudflare account. Workers, D1 and KV are on the free plan. The shared album additionally needs **R2, which requires adding a payment method to activate** (see “Shared album” above) — or switch the album off. **Status (2026‑11‑25): deployed.** The Worker `birthday-site` runs on Cloudflare with D1 `birthday-db`, KV `PRIVATE_KV` and the custom domain `happybirthdaydongqingxin.me` (DNS on Cloudflare, nameservers changed at Namecheap). R2 / the shared album is not enabled. The steps below are what was done, kept for reference and for redeploying (`npm run deploy`, `npm run import:remote`).
 
 ```bash
 npx wrangler login
