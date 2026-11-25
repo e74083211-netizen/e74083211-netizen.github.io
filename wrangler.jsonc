@@ -1,4 +1,4 @@
-// Cloudflare Workers 配置。部署前请把下面两个 REPLACE_... 换成你自己创建的资源 ID（见 README「部署」）。
+// Cloudflare Workers 配置。D1 和 KV 的 ID 是线上资源的编号（不是密码），可以公开。
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "birthday-site",
@@ -9,7 +9,7 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"],
+    "run_worker_first": ["/api/*", "/audio/*"],
     "not_found_handling": "none"
   },
 
@@ -18,7 +18,9 @@
     {
       "binding": "DB",
       "database_name": "birthday-db",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "d1e094ff-c4bf-4023-bb80-0e15987ac745",
+      // 本地预览（npm run dev）用的数据存在这个名字下面，保持不变，本机的账号和留言才不会丢
+      "preview_database_id": "REPLACE_WITH_D1_DATABASE_ID",
       "migrations_dir": "migrations"
     }
   ],
@@ -27,7 +29,9 @@
   "kv_namespaces": [
     {
       "binding": "PRIVATE_KV",
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      "id": "b9c0bacb65ff449eb72ecedbd0b32018",
+      // 本地预览用的私密内容存在这个名字下面
+      "preview_id": "REPLACE_WITH_KV_NAMESPACE_ID"
     }
   ],
 

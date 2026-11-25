@@ -86,9 +86,48 @@ async function route(request, env) {
   return fail(404, 'not_found', '没有这个接口');
 }
 
+/**
+ * 音乐文件支持“分段读取”（HTTP Range）。iPhone / Safari 播放音频时必须有这个，
+ * 线上的静态文件服务不一定处理 Range，所以这里自己切片返回 206。
+ */
+async function serveAudio(request, env) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return env.ASSETS.fetch(request);
+  const res = await env.ASSETS.fetch(new Request(request.url, { method: 'GET' }));
+  if (!res.ok) return res;
+  const headers = new Headers(res.headers);
+  headers.set('Accept-Ranges', 'bytes');
+  headers.set('Cache-Control', 'public, max-age=3600');
+  const buf = await res.arrayBuffer();
+  const size = buf.byteLength;
+  const m = /^bytes=(\d*)-(\d*)$/.exec((request.headers.get('Range') || '').trim());
+  const body = (b) => (request.method === 'HEAD' ? null : b);
+  if (!m || (m[1] === '' && m[2] === '')) {
+    headers.set('Content-Length', String(size));
+    return new Response(body(buf), { status: 200, headers });
+  }
+  let start;
+  let end;
+  if (m[1] === '') {
+    start = Math.max(0, size - Number(m[2])); // bytes=-500：最后 500 字节
+    end = size - 1;
+  } else {
+    start = Number(m[1]);
+    end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+  }
+  if (start >= size || start > end) {
+    headers.set('Content-Range', `bytes */${size}`);
+    headers.delete('Content-Length');
+    return new Response(null, { status: 416, headers });
+  }
+  headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+  headers.set('Content-Length', String(end - start + 1));
+  return new Response(body(buf.slice(start, end + 1)), { status: 206, headers });
+}
+
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
+    if (pathname.startsWith('/audio/') && pathname.endsWith('.mp3')) return serveAudio(request, env);
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try {
       return await route(request, env);
