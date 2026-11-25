@@ -174,7 +174,7 @@ try {
     writeFileSync(file, JSON.stringify(batch));
     say(`\n→ 写入 ${mode === 'remote' ? '线上' : '本地'} KV（第 ${i + 1}/${batches.length} 批，${batch.length} 项）…`);
     // 本地预览读的是 wrangler.jsonc 里的 preview_id，所以本地导入要加 --preview
-    const where = mode === 'local' ? ['--local', '--preview'] : ['--remote'];
+    const where = mode === 'local' ? ['--local', '--preview'] : ['--remote', '--preview', 'false'];
     const r = spawnSync('npx', ['wrangler', 'kv', 'bulk', 'put', file, '--binding', 'PRIVATE_KV', ...where], {
       stdio: 'inherit',
     });
