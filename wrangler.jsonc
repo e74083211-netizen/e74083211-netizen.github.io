@@ -51,5 +51,13 @@
     "PRIVATE_SESSION_HOURS": "12"
   },
 
+  "workers_dev": true,
+
+  // 正式域名（域名已托管在 Cloudflare）
+  "routes": [
+    { "pattern": "happybirthdaydongqingxin.me", "custom_domain": true },
+    { "pattern": "www.happybirthdaydongqingxin.me", "custom_domain": true }
+  ],
+
   "observability": { "enabled": true }
 }
