@@ -1,0 +1,35 @@
+<!doctype html>
+<!--
+  这个文件只给 GitHub Pages 用：域名已经搬到 Cloudflare，
+  个别还缓存着旧地址的浏览器（比如微信）会来到这里，看到一句提示，并自动重试。
+  真正的网站在 public/ 里，由 Cloudflare Worker 提供。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>生日快乐</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #070b14; color: #e8eef6; }
+    body { display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; text-align: center; padding: 0 16px; }
+    h1 { font-size: 24px; letter-spacing: .2em; color: #ffb25a; margin: 0 0 14px; }
+    p { margin: 6px 0; color: rgba(232, 238, 246, .75); line-height: 1.8; }
+    a { color: #7fd4ff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>生日快乐</h1>
+    <p>网站刚刚升级，正在换上新的样子。</p>
+    <p>稍等一会儿，这个页面会自动刷新。</p>
+    <p><a href="" id="again">现在刷新</a></p>
+  </main>
+  <script>
+    // 带一个随机参数重新打开，绕开缓存；30 秒试一次
+    function retry() { location.replace(location.pathname + '?t=' + Date.now()); }
+    document.getElementById('again').onclick = function (e) { e.preventDefault(); retry(); };
+    setTimeout(retry, 30000);
+  </script>
+</body>
+</html>
