@@ -1,7 +1,8 @@
 // 视觉效果：漂浮光点、彩纸庆祝、光点迸发
 import { reducedMotion } from './util.js';
 
-const PALETTE = ['#f0b86e', '#f6d29b', '#df8a62', '#d39b91', '#f4ebdc', '#a3b094', '#e7c27d'];
+// 霓虹配色：以琥珀为主，少量品红与青蓝点缀，白色作为高光
+const PALETTE = ['#ffb25a', '#ffd9a6', '#ff4d9d', '#ffb25a', '#4fe3ff', '#ffffff', '#ffc97e'];
 
 /** 背景中缓慢漂浮的温暖光点（克制：数量少、速度慢、页面隐藏时暂停） */
 export function startDust(canvas) {
@@ -83,6 +84,8 @@ function run(particles, { c, ctx, w, h }, duration) {
       prev = now;
       const age = now - start;
       ctx.clearRect(0, 0, w, h);
+      // 叠加发光：彩片看起来像一片片小灯光，而不是纸屑
+      ctx.globalCompositeOperation = 'lighter';
       let alive = 0;
       for (const p of particles) {
         p.update(dt, age);
@@ -150,7 +153,7 @@ export function celebrate() {
           ctx.fill();
         } else {
           ctx.scale(1, Math.cos(this.wob));
-          ctx.fillRect(-this.size / 2, -this.size / 4, this.size, this.size / 2);
+          ctx.fillRect(-this.size / 2, -this.size / 8, this.size, this.size / 4);
         }
         ctx.restore();
       },
@@ -175,7 +178,7 @@ export function celebrate() {
       draw(ctx) {
         const a = Math.max(0, this.life);
         const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r * 5);
-        g.addColorStop(0, `rgba(255, 220, 160, ${a})`);
+        g.addColorStop(0, `rgba(255, 214, 160, ${a})`);
         g.addColorStop(1, 'rgba(255, 220, 160, 0)');
         ctx.fillStyle = g;
         ctx.beginPath();

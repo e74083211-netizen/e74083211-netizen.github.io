@@ -2,19 +2,33 @@
 .admin__main { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 48px var(--gutter) 80px; }
 .admin__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 28px; }
 .admin__head h1 { margin: 0; font-size: 30px; letter-spacing: 0.12em; }
-.admin__login { padding: 28px; max-width: 440px; }
+.admin__login { padding: 34px 30px 26px; max-width: 440px; margin: 6vh auto 0; }
+.admin__login .btn { justify-self: start; }
 .admin__login h2 { margin: 0 0 6px; font-size: 22px; }
 .admin__login form { display: grid; gap: 16px; margin-top: 18px; }
 .admin__muted { color: var(--text-muted); font-family: var(--sans); font-size: 13px; margin: 0 0 12px; }
 .admin__status { min-height: 1.6em; font-family: var(--sans); font-size: 13px; color: var(--danger); margin: 0; }
 .admin__status.is-ok { color: var(--ok); }
+.admin__views { display: flex; gap: 6px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+.admin__views button { border: 0; background: none; padding: 10px 16px; font-size: 15px; letter-spacing: .12em; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.admin__views button[aria-selected="true"] { color: var(--amber); border-bottom-color: var(--amber); }
+.admin__thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin__thumbs a { display: block; width: 84px; height: 84px; border-radius: 4px; overflow: hidden; background: #2a2019; }
+.admin__thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.admin__edit { display: grid; gap: 12px; }
+.admin__edit .field__label { font-size: 12px; }
+.admin__edit input, .admin__edit textarea { font-size: 15px; padding: 9px 12px; }
+.admin__edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .admin__edit-row { grid-template-columns: 1fr; } }
 .admin__toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
 .admin__tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin__tabs button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 14px; font-family: var(--sans); font-size: 13px; color: var(--text-muted); }
 .admin__tabs button[aria-selected="true"] { background: var(--amber-soft); border-color: rgba(240,184,110,.5); color: var(--text); }
 .admin__tabs em { font-style: normal; opacity: .7; margin-left: 2px; }
 .admin__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.admin__item { padding: 16px 18px; display: grid; gap: 10px; }
+.admin__item { padding: 18px 20px; display: grid; gap: 10px; transition: border-color .3s; }
+.admin__item:hover { border-color: var(--line-strong); }
+.admin__item > p { font-family: var(--hand); font-size: 18px; line-height: 1.8; }
 .admin__item p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .admin__meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-family: var(--sans); font-size: 12px; color: var(--text-faint); }
 .admin__meta strong { color: var(--text); font-family: var(--serif); font-size: 14px; font-weight: 600; }
@@ -23,7 +37,7 @@
 .badge--hidden { color: var(--text-muted); }
 .badge--pending { color: var(--amber); border-color: rgba(240,184,110,.5); }
 .admin__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.admin__actions .btn { --h: 34px; padding: 0 14px; font-size: 13px; letter-spacing: .04em; font-family: var(--sans); }
+.admin__actions .btn, .admin__toolbar .btn, .admin__head .btn { --h: 36px; padding: 0 16px; font-size: 13px; letter-spacing: .06em; text-indent: 0; font-family: var(--sans); }
 .btn--danger { background: transparent; border-color: rgba(239,154,134,.45); color: var(--danger); }
 .btn--danger:hover { background: rgba(239,154,134,.1); }
 .admin__item.is-hidden p { opacity: .55; }
@@ -31,3 +45,31 @@
 .admin__more { display: flex; margin: 16px auto 0; }
 .admin__back { margin-top: 40px; font-family: var(--sans); font-size: 13px; }
 .admin__back a { color: var(--text-muted); }
+.admin__who { margin: 6px 0 0; font-family: var(--sans); font-size: 13px; color: var(--text-muted); }
+.admin__head-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.admin__h { margin: 34px 0 12px; font-size: 18px; letter-spacing: .14em; font-weight: 600; }
+.admin__block { padding: 22px 22px 18px; }
+.admin__block .admin__h { margin-top: 0; }
+.admin__invite { display: grid; grid-template-columns: 1fr 140px auto; gap: 12px; align-items: end; }
+@media (max-width: 640px) { .admin__invite { grid-template-columns: 1fr; } }
+.field select { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: rgba(8, 6, 4, 0.5); color: var(--text); font-size: 15px; }
+.admin__link { margin-top: 18px; padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(238, 181, 108, .45); background: var(--amber-soft); }
+.admin__link-title { margin: 0 0 10px; font-weight: 600; letter-spacing: .1em; color: var(--amber); }
+.admin__link-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.admin__link-row input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: rgba(8, 6, 4, .6); font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--text); }
+.admin__link .admin__muted { margin: 4px 0 0; }
+.admin__warn { color: var(--amber) !important; }
+.admin__item--row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.admin__empty--small { padding: 12px 0; text-align: left; font-size: 14px; }
+
+/* 后台：沿用同一套深色与青蓝，但不放城市场景和多余动画，保持清晰易用 */
+.admin { background: radial-gradient(90% 50% at 50% 0%, rgba(79, 227, 255, 0.07), transparent 60%), #05070c; }
+.admin .grain, .admin .vignette { display: none; }
+.admin__head h1 { font-family: var(--sans); font-weight: 800; letter-spacing: .16em; }
+.admin__views button { font-family: var(--sans); }
+.admin__views button[aria-selected="true"] { color: var(--cyan); border-bottom-color: var(--cyan); }
+.admin__tabs button[aria-selected="true"] { background: rgba(79, 227, 255, .12); border-color: rgba(79, 227, 255, .45); }
+.admin__item > p { font-family: var(--serif); }
+.admin__link { border-color: rgba(79, 227, 255, .4); background: rgba(79, 227, 255, .06); }
+.admin__link-title { color: var(--cyan); }
+.admin * { animation-duration: 0.01ms !important; }

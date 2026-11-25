@@ -47,57 +47,13 @@ export async function safeEqual(a, b) {
 // ---------- 配置检查 ----------
 
 export function configStatus(env) {
-  const secretOk = typeof env.SESSION_SECRET === 'string' && env.SESSION_SECRET.length >= 32;
-  const accessOk = typeof env.ACCESS_PASSWORD === 'string' && env.ACCESS_PASSWORD.length >= 4;
-  const adminOk =
-    typeof env.ADMIN_PASSWORD === 'string' &&
-    env.ADMIN_PASSWORD.length >= 8 &&
-    env.ADMIN_PASSWORD !== env.ACCESS_PASSWORD;
   return {
     database: !!env.DB,
     privateStorage: !!env.PRIVATE_KV,
-    privateArea: secretOk && accessOk && !!env.PRIVATE_KV,
-    admin: secretOk && adminOk && !!env.DB,
+    albumStorage: !!env.ALBUM_BUCKET,
+    accounts: !!env.DB,
     moderation: env.MESSAGE_MODERATION === 'pre' ? 'pre' : 'off',
   };
-}
-
-// ---------- 会话令牌 ----------
-// 令牌 = base64url(payload) + "." + HMAC(SESSION_SECRET)。
-// payload 中带有口令指纹：修改口令后，所有旧会话自动失效。
-
-async function passwordFingerprint(env, scope, password) {
-  return (await hmac(env.SESSION_SECRET, `pw:${scope}:${password}`)).slice(0, 16);
-}
-
-export async function issueToken(env, scope, password, ttlSeconds) {
-  const nonce = b64url(crypto.getRandomValues(new Uint8Array(9)));
-  const payload = {
-    s: scope,
-    e: Math.floor(Date.now() / 1000) + ttlSeconds,
-    v: await passwordFingerprint(env, scope, password),
-    n: nonce,
-  };
-  const body = b64url(enc.encode(JSON.stringify(payload)));
-  const sig = await hmac(env.SESSION_SECRET, `${scope}.${body}`);
-  return `${body}.${sig}`;
-}
-
-export async function verifyToken(env, scope, password, token) {
-  if (!token || typeof token !== 'string' || token.length > 512) return false;
-  const [body, sig] = token.split('.');
-  if (!body || !sig) return false;
-  const expected = await hmac(env.SESSION_SECRET, `${scope}.${body}`);
-  if (!(await safeEqual(expected, sig))) return false;
-  let payload;
-  try {
-    payload = JSON.parse(dec.decode(b64urlDecode(body)));
-  } catch {
-    return false;
-  }
-  if (payload.s !== scope || typeof payload.e !== 'number') return false;
-  if (payload.e < Math.floor(Date.now() / 1000)) return false;
-  return payload.v === (await passwordFingerprint(env, scope, password));
 }
 
 // ---------- Cookie ----------

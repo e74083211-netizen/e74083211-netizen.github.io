@@ -4,29 +4,39 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="dark">
-  <title>留言管理</title>
+  <title>管理后台</title>
   <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/cyber.css">
   <link rel="stylesheet" href="/admin/admin.css">
   <script type="module" src="/admin/admin.js"></script>
 </head>
-<body class="admin">
+<body class="admin" data-scene="private">
   <main class="admin__main">
     <header class="admin__head">
       <div>
         <p class="eyebrow">Admin</p>
-        <h1>留言管理</h1>
+        <h1>管理后台</h1>
+        <p class="admin__who" data-who hidden></p>
       </div>
-      <button class="btn btn--ghost" type="button" data-logout hidden>退出后台</button>
+      <div class="admin__head-actions">
+        <button class="btn btn--ghost" type="button" data-password hidden>修改密码</button>
+        <button class="btn btn--ghost" type="button" data-logout hidden>退出登录</button>
+      </div>
     </header>
 
     <section class="card admin__login" data-login hidden>
       <h2>登录后台</h2>
-      <p class="admin__muted">这里使用独立的管理员密码（ADMIN_PASSWORD），与私密区域的访问口令不同。</p>
+      <p class="admin__muted">用你的管理员账号登录。还没有管理员账号？请看 README 里的「设置管理员账号」。</p>
       <form data-login-form novalidate>
         <label class="field">
-          <span class="field__label">管理员密码</span>
+          <span class="field__label">用户名</span>
+          <input name="username" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+        </label>
+        <label class="field">
+          <span class="field__label">密码</span>
           <input name="password" type="password" autocomplete="current-password" required>
         </label>
         <button class="btn btn--primary" type="submit">登录</button>
@@ -34,6 +44,62 @@
       </form>
     </section>
 
+    <section class="card admin__login" data-not-admin hidden>
+      <h2>这个账号不是管理员</h2>
+      <p class="admin__muted">你已经登录，但这个账号没有管理权限。可以回到网站正常浏览，或者退出后换管理员账号登录。</p>
+      <p><a class="btn btn--ghost" href="/#private">回到网站</a></p>
+    </section>
+
+    <div class="admin__views" data-views hidden role="tablist" aria-label="管理内容">
+      <button type="button" role="tab" data-view="accounts" aria-selected="true">账号与邀请</button>
+      <button type="button" role="tab" data-view="album" aria-selected="false">共同相册</button>
+      <button type="button" role="tab" data-view="messages" aria-selected="false">公开留言</button>
+    </div>
+
+    <!-- 账号与邀请 -->
+    <section data-accounts-panel hidden>
+      <div class="admin__block card">
+        <h2 class="admin__h">邀请一个人</h2>
+        <p class="admin__muted">生成一个只能用一次的邀请链接，单独发给对方（比如微信私聊）。对方打开后自己设置用户名、称呼和密码，你看不到对方的密码。</p>
+        <form class="admin__invite" data-invite-form novalidate>
+          <label class="field">
+            <span class="field__label">备注（只有你看得到，可不填）</span>
+            <input name="note" type="text" maxlength="40" placeholder="例如：给寿星">
+          </label>
+          <label class="field">
+            <span class="field__label">有效期</span>
+            <select name="days">
+              <option value="1">1 天</option>
+              <option value="3">3 天</option>
+              <option value="7" selected>7 天</option>
+              <option value="14">14 天</option>
+            </select>
+          </label>
+          <button class="btn btn--primary" type="submit">生成邀请链接</button>
+        </form>
+        <div class="admin__link" data-link hidden></div>
+      </div>
+
+      <h2 class="admin__h">还没被使用的链接</h2>
+      <ul class="admin__list" data-invites></ul>
+      <p class="admin__empty admin__empty--small" data-invites-empty hidden>没有待使用的链接。</p>
+
+      <h2 class="admin__h">账号</h2>
+      <ul class="admin__list" data-users></ul>
+    </section>
+
+    <!-- 共同相册 -->
+    <section data-album-panel hidden>
+      <div class="admin__toolbar">
+        <p class="admin__muted" data-album-count></p>
+        <button class="btn btn--ghost" type="button" data-album-refresh>刷新</button>
+      </div>
+      <p class="admin__muted">每段回忆都记在添加者的账号下面，本人可以修改和删除自己的内容；你在这里可以管理全部。“未归属”的是账号功能上线之前添加的内容，可以用「指定归属」交给某个账号。</p>
+      <ul class="admin__list" data-album-list></ul>
+      <p class="admin__empty" data-album-empty hidden>相册里还没有回忆。</p>
+    </section>
+
+    <!-- 公开留言 -->
     <section data-panel hidden>
       <div class="admin__toolbar">
         <div class="admin__tabs" role="tablist" data-tabs>

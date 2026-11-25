@@ -26,7 +26,8 @@ export function initWall() {
   const rot = (id) => (((id * 37) % 7) - 3) * 0.35;
 
   function note(m, isNew = false, i = 0) {
-    return h('li', { class: `note paper${isNew ? ' is-new' : ''}`, style: { '--r': `${rot(m.id || 1)}deg`, '--d': `${Math.min(i, 8) * 0.06}s` } },
+    const id = m.id || 1;
+    return h('li', { class: `note paper note--t${(id % 4) + 1}${isNew ? ' is-new' : ''}`, style: { '--r': `${rot(id)}deg`, '--d': `${Math.min(i, 8) * 0.06}s`, '--tape': `${28 + ((id * 17) % 44)}%` } },
       h('p', { class: 'note__text', text: m.content }),
       h('p', { class: 'note__meta' },
         h('span', { class: 'note__name', text: m.nickname }),
@@ -34,7 +35,7 @@ export function initWall() {
   }
 
   function setMeta() {
-    meta.textContent = total ? `已经有 ${total} 句祝福` : '';
+    meta.textContent = total ? `墙上已经有 ${total} 张卡片` : '';
   }
 
   function showState(kind, message) {
@@ -44,13 +45,13 @@ export function initWall() {
       return;
     }
     if (kind === 'empty') {
-      stateEl.append(h('div', { class: 'card' }, h('p', { text: fill(get('wall.empty')) })));
+      stateEl.append(h('div', { class: 'wall__empty' }, fill(get('wall.empty'))));
     }
     if (kind === 'error') {
       stateEl.append(
-        h('div', { class: 'card' },
-          h('p', { text: message }),
-          h('button', { class: 'btn btn--ghost', type: 'button', onclick: () => load(true) }, '重新加载'))
+        h('div', { class: 'wall__empty' },
+          h('div', { text: message }),
+          h('button', { class: 'btn btn--ghost', type: 'button', onclick: () => load(true) }, '再试一次'))
       );
     }
   }
@@ -79,7 +80,7 @@ export function initWall() {
     } catch (e) {
       if (reset) list.replaceChildren();
       backendOk = e.code !== 'no_backend';
-      showState('error', backendOk ? `祝福暂时加载不出来：${e.message}` : '留言墙需要后端服务才能使用。当前是静态预览模式，请用 npm run dev 启动完整版本。');
+      showState('error', backendOk ? `卡片暂时取不出来：${e.message}` : '留言墙暂时连不上，稍后再来看看吧。');
     } finally {
       more.disabled = false;
     }
@@ -93,7 +94,7 @@ export function initWall() {
   function updateCount() {
     const n = len(text.value);
     counter.textContent = `${n} / ${MAX.content}`;
-    counter.classList.toggle('is-over', n > MAX.content);
+    counter.classList.toggle('is-over', n >= MAX.content);
   }
 
   text.addEventListener('input', updateCount);
@@ -107,7 +108,8 @@ export function initWall() {
     const nickname = nick.value.trim();
     const content = text.value.trim();
     let problem = '';
-    if (!nickname) { problem = '请写一个昵称'; nick.setAttribute('aria-invalid', 'true'); }
+    if (!content && !nickname) { problem = '先写点什么吧'; text.setAttribute('aria-invalid', 'true'); }
+    else if (!nickname) { problem = '落款还空着，写个昵称吧'; nick.setAttribute('aria-invalid', 'true'); }
     else if (len(nickname) > MAX.nickname) { problem = `昵称最多 ${MAX.nickname} 个字`; nick.setAttribute('aria-invalid', 'true'); }
     else if (len(content) < 2) { problem = '祝福至少写两个字吧'; text.setAttribute('aria-invalid', 'true'); }
     else if (len(content) > MAX.content) { problem = `祝福最多 ${MAX.content} 个字`; text.setAttribute('aria-invalid', 'true'); }
@@ -119,7 +121,7 @@ export function initWall() {
 
     submitBtn.disabled = true;
     submitBtn.classList.add('is-busy');
-    setStatus('正在送出…');
+    setStatus('正在贴上去…');
     try {
       const data = await api('/api/messages', {
         method: 'POST',
@@ -130,7 +132,7 @@ export function initWall() {
       if (data.status === 'pending') {
         setStatus(get('wall.pendingNotice'), 'ok');
       } else {
-        setStatus('收到啦，谢谢你的祝福 ✦', 'ok');
+        setStatus(get('wall.success', '贴好了，谢谢你的祝福。'), 'ok');
         if (data.message) {
           stateEl.replaceChildren();
           list.prepend(note(data.message, true));
@@ -140,7 +142,7 @@ export function initWall() {
       }
     } catch (err) {
       const wait = err.data?.retryAfter ? `（约 ${Math.ceil(err.data.retryAfter / 60)} 分钟后可再试）` : '';
-      setStatus(err.code === 'no_backend' ? '当前是静态预览模式，留言需要后端服务' : `${err.message}${wait}`, 'error');
+      setStatus(err.code === 'no_backend' ? '留言墙暂时连不上，稍后再试试吧' : `${err.message}${wait}`, 'error');
     } finally {
       submitBtn.disabled = false;
       submitBtn.classList.remove('is-busy');

@@ -31,6 +31,16 @@
     }
   ],
 
+  // 共同相册的照片（私有存储桶，不开放公共访问；只能通过已解锁的 API 读取）
+  // 目前相册是关着的（没有开通 R2）。以后要开：在 Cloudflare 开通 R2 并创建 birthday-album 桶，
+  // 去掉下面几行开头的 //，再把 public/site.config.js 里的 sharedAlbum 改成 true，重新部署。
+  // "r2_buckets": [
+  //   {
+  //     "binding": "ALBUM_BUCKET",
+  //     "bucket_name": "birthday-album"
+  //   }
+  // ],
+
   // 非机密开关。机密（密码、会话密钥）请用 `wrangler secret put`，不要写在这里。
   "vars": {
     "MESSAGE_MODERATION": "off",

@@ -73,7 +73,7 @@ export async function api(path, { method = 'GET', body, signal } = {}) {
   const isJson = (res.headers.get('content-type') || '').includes('application/json');
   const data = isJson ? await res.json().catch(() => null) : null;
   if (!res.ok || !data) {
-    if (!isJson) throw new ApiError('后端服务没有连接（可能是静态预览模式）', res.status, { error: 'no_backend' });
+    if (!isJson) throw new ApiError('暂时连不上，稍后再试试吧', res.status, { error: 'no_backend' });
     throw new ApiError(data?.message || '出了点问题，请稍后再试', res.status, data);
   }
   return data;

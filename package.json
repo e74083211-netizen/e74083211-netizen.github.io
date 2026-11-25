@@ -13,7 +13,11 @@
     "import:remote": "node scripts/import-private.mjs --remote",
     "test:smoke": "node scripts/smoke-test.mjs",
     "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "admin:setup": "node scripts/admin-invite.mjs --local",
+    "admin:setup:remote": "node scripts/admin-invite.mjs --remote",
+    "admin:reset": "node scripts/admin-invite.mjs --local --reset",
+    "admin:reset:remote": "node scripts/admin-invite.mjs --remote --reset"
   },
   "devDependencies": {
     "wrangler": "^4.40.0"

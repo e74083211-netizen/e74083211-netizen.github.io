@@ -7,7 +7,8 @@
 // 选项：--dir <文件夹>   默认 private-assets
 //       --no-resize      不压缩照片（默认在 macOS 上用系统自带 sips 压缩并生成缩略图）
 import { readFileSync, readdirSync, existsSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { join, extname, basename, resolve } from 'node:path';
+import { join, extname, basename, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { tmpdir, platform } from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -47,7 +48,10 @@ const MIME = {
   '.gif': 'image/gif', '.avif': 'image/avif', '.heic': 'image/heic', '.heif': 'image/heif',
 };
 const FOLDERS = ['memories', 'surprise'];
-const NAME_OK = /^[a-z0-9][a-z0-9-]*$/;
+const ASCII_OK = /^[a-z0-9][a-z0-9-]*$/;
+/** 照片可以用中文文件名；存储时换成一个由文件名算出的英文键，文件名本身不变 */
+const storageKey = (stem) => (ASCII_OK.test(stem) ? stem : `p-${createHash('sha1').update(stem).digest('hex').slice(0, 12)}`);
+const normName = (name) => basename(name, extname(name)).normalize('NFC').toLowerCase();
 const hasSips = platform() === 'darwin' && spawnSync('which', ['sips']).status === 0;
 const work = mkdtempSync(join(tmpdir(), 'bd-import-'));
 
@@ -61,9 +65,22 @@ function dims(file) {
   }
 }
 
-/** 返回 { file, ext, w, h }：在 macOS 上把大图/HEIC 转为适合网页的 JPEG（或 PNG）。 */
+// 优先用 Python + Pillow：按拍摄方向摆正、去掉 EXIF（含 GPS 定位）。没有 Pillow 时退回到 macOS 的 sips。
+const pyPrep = join(dirname(fileURLToPath(import.meta.url)), 'prep-image.py');
+const hasPillow = spawnSync('python3', ['-I', '-c', 'import PIL']).status === 0;
+
+/** 返回 { file, ext, w, h }：把照片转为适合网页的 JPEG（或 PNG）。 */
 function prepare(src, stem, maxSide, suffix) {
   const ext = extname(src).toLowerCase();
+  if (wantResize && hasPillow && ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+    const out = join(work, `${stem}${suffix}.jpg`);
+    const r = spawnSync('python3', ['-I', pyPrep, src, out, String(maxSide)], { encoding: 'utf8' });
+    if (r.status === 0) {
+      const [w, h] = r.stdout.trim().split(/\s+/).map(Number);
+      return { file: out, ext: '.jpg', w, h };
+    }
+    say(`  ⚠ ${basename(src)} 用 Pillow 处理失败，改用系统工具：${(r.stderr || '').trim().split('\n').pop()}`);
+  }
   const d = dims(src);
   const convertible = ['.jpg', '.jpeg', '.heic', '.heif', '.png'].includes(ext);
   if (!wantResize || !hasSips || !convertible) {
@@ -93,23 +110,17 @@ for (const folder of FOLDERS) {
       say(`  · 跳过非图片文件 ${folder}/${name}`);
       continue;
     }
-    const stem = basename(name, extname(name)).toLowerCase();
-    if (!NAME_OK.test(stem)) {
-      say(`  ⚠ 跳过 ${folder}/${name}：文件名只能包含小写字母、数字和 -（例如 memory-01.jpg）`);
-      continue;
-    }
-    if (folder === 'memories' && !/^memory-\d{2,3}$/.test(stem)) {
-      say(`  ⚠ ${folder}/${name} 不符合 memory-01 这样的命名，只有在 content.json 里写 "photo": "${stem}" 时才会显示`);
-    }
-    const full = prepare(src, `${folder}-${stem}`, 2400, '');
-    const thumb = hasSips && wantResize ? prepare(src, `${folder}-${stem}`, 960, '.thumb') : full;
+    const stem = normName(name);
+    const skey = storageKey(stem);
+    const full = prepare(src, `${folder}-${skey}`, 2400, '');
+    const thumb = (hasPillow || hasSips) && wantResize ? prepare(src, `${folder}-${skey}`, 960, '.thumb') : full;
     const pieces = { full, thumb };
     const record = { w: full.w, h: full.h };
     for (const [kind, p] of Object.entries(pieces)) {
       const buf = readFileSync(p.file);
       if (buf.length > 24 * 1024 * 1024) die(`${folder}/${name} 超过 24MB，请先压缩`);
       const hash = createHash('sha1').update(buf).digest('hex').slice(0, 16);
-      const key = `media/${folder}/${stem}${kind === 'thumb' && p !== full ? '.thumb' : ''}${p.ext}`;
+      const key = `media/${folder}/${skey}${kind === 'thumb' && p !== full ? '.thumb' : ''}${p.ext}`;
       record[kind] = key;
       if (kind === 'thumb' && p === full) continue;
       entries.push({ key, value: buf.toString('base64'), base64: true, metadata: { type: MIME[p.ext] || 'application/octet-stream', hash } });
@@ -125,11 +136,22 @@ entries.push({ key: 'manifest', value: JSON.stringify(manifest) });
 // ---------- 3. 报告 ----------
 const memories = Array.isArray(content.memories) ? content.memories : [];
 say(`\n私密文字：${memories.length} 段回忆，${content.letter ? '有' : '没有'}信，${content.surprise ? '有' : '没有'}最后的惊喜`);
-say(`照片：${found.length} 张${found.length && hasSips && wantResize ? '（已压缩并生成缩略图）' : ''}`);
-const missing = memories
-  .map((m, i) => (m.photo || `memory-${String(i + 1).padStart(2, '0')}`).replace(/\.[a-z0-9]+$/i, '').toLowerCase())
-  .filter((n) => !manifest.media[`memories/${n}`]);
-if (missing.length) say(`  · 还没有照片（会显示占位框）：${missing.map((n) => `memories/${n}.jpg`).join('、')}`);
+say(`照片：${found.length} 张${found.length && (hasPillow || hasSips) && wantResize ? `（已压缩、生成缩略图${hasPillow ? '、按拍摄方向摆正、去掉了定位等拍摄信息' : ''}）` : ''}`);
+// 每段回忆想要的照片：photos 数组（可多张、可中文名）> photo 字符串 > 默认 memory-01 这种命名
+const wanted = (m, i) =>
+  Array.isArray(m.photos) ? m.photos : m.photo === null ? [] : [m.photo || `memory-${String(i + 1).padStart(2, '0')}`];
+const used = new Set();
+const missing = [];
+memories.forEach((m, i) => {
+  for (const p of wanted(m, i)) {
+    const n = normName(String(p));
+    used.add(`memories/${n}`);
+    if (!manifest.media[`memories/${n}`]) missing.push(`memories/${p}`);
+  }
+});
+if (missing.length) say(`  · 文案里写了、但文件夹里找不到的照片（会显示占位框）：${missing.join('、')}`);
+const unused = found.filter((f) => f.startsWith('memories/') && !used.has(f));
+if (unused.length) say(`  · 文件夹里有、但文案没有用到的照片（已导入，暂不显示）：${unused.join('、')}`);
 const examples = JSON.stringify(content).includes('【示例】');
 if (examples) say('  · 提示：内容里还有【示例】文字，记得替换成真实内容');
 

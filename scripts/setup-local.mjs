@@ -11,14 +11,12 @@ const run = (cmd, args) => {
 const rand = (n) => randomBytes(n).toString('base64url');
 
 if (!existsSync('.dev.vars')) {
-  const access = `gift-${rand(4)}`;
-  const admin = `admin-${rand(9)}`;
   writeFileSync(
     '.dev.vars',
     `# 本地开发用的机密（已被 Git 忽略）。线上请用 npx wrangler secret put 设置。\n` +
-      `ACCESS_PASSWORD=${access}\nADMIN_PASSWORD=${admin}\nSESSION_SECRET=${rand(48)}\n`
+      `SESSION_SECRET=${rand(48)}\n`
   );
-  console.log('✔ 已生成 .dev.vars（里面有本地预览用的访问口令和后台密码）');
+  console.log('✔ 已生成 .dev.vars');
 } else {
   const vars = readFileSync('.dev.vars', 'utf8');
   if (!/^SESSION_SECRET=.{32,}/m.test(vars)) console.warn('⚠ .dev.vars 中 SESSION_SECRET 少于 32 个字符，私密区域将无法使用');
@@ -32,4 +30,5 @@ if (!existsSync('private-assets')) {
 
 run('npx', ['wrangler', 'd1', 'migrations', 'apply', 'birthday-db', '--local']);
 run('node', ['scripts/import-private.mjs', '--local']);
-console.log('\n全部就绪：运行 npm run dev，然后打开 http://localhost:8787\n');
+console.log('\n全部就绪：运行 npm run dev，然后打开 http://localhost:8787');
+console.log('第一次使用：运行 npm run admin:setup，用打印出来的链接设置你的管理员账号。\n');
